@@ -85,7 +85,7 @@ class BookValidationTests {
         Set<ConstraintViolation<Book>> violations = validator.validate(book);
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage())
-                .isEqualTo("The book price must be greater than zero.");
+                .isEqualTo("The book price must be greater than " + 0  + ".");
     }
 
     @Test
@@ -94,7 +94,7 @@ class BookValidationTests {
         Set<ConstraintViolation<Book>> violations = validator.validate(book);
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getMessage())
-                .isEqualTo("The book price must be greater than zero.");
+                .isEqualTo("The book price must be greater than " + 0  + ".");
     }
 
 }
