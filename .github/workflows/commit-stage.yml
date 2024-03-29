@@ -50,6 +50,11 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+      - name: Debug environment variables
+        run: |
+          echo "Registry: ${{ env.REGISTRY }}"
+          echo "Image Name: ${{ env.IMAGE_NAME }}"
+          echo "Version: ${{ env.VERSION }}"
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
