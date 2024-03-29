@@ -16,16 +16,19 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
+
       - name: Build, unit tests and integration tests
         run: |
           chmod +x gradlew
           ./gradlew build
+
       - name: Code vulnerability scanning
         uses: anchore/scan-action@v3
         id: scan
@@ -33,15 +36,17 @@ jobs:
           path: "${{ github.workspace }}"
           fail-build: false
           severity-cutoff: high
+
       - name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v2
         if: success() || failure()
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
+
   package:
     name: Package and Publish
     if: ${{ github.ref == 'refs/heads/master' }}
-    needs: [ build ]
+    needs: [build]
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -50,39 +55,33 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+
       - name: Debug environment variables
         run: |
           echo "Registry: ${{ env.REGISTRY }}"
           echo "Image Name: ${{ env.IMAGE_NAME }}"
           echo "Version: ${{ env.VERSION }}"
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
           cache: gradle
-#      - name: Log into container registry
-#        run: echo "${{ secrets.DOCKER_REGISTRY_TOKEN }}" | docker login ghcr.io -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
       - name: Log into container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Use GITHUB_TOKEN
-#        run: echo ${{ secrets.GITHUB_TOKEN }}
-#      - name: Build container image
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          chmod +x gradlew
-#          ./gradlew bootBuildImage \
-#            --imageName ghcr.io/${{ env.IMAGE_NAME }}:${{ env.VERSION }} -PregistryToken=${GITHUB_TOKEN}
+
       - name: Build container image
         run: |
           chmod +x gradlew
           ./gradlew bootBuildImage \
             --imageName ghcr.io/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+
       - name: OCI image vulnerability scanning
         uses: anchore/scan-action@v3
         id: scan
@@ -90,18 +89,12 @@ jobs:
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           fail-build: false
           severity-cutoff: high
+
       - name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v2
         if: success() || failure()
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
-      - name: Log into container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.DOCKER_REGISTRY_TOKEN }}
-#      - name: Log into container registry
-#        run: echo "${{ secrets.DOCKER_REGISTRY_TOKEN }}" | docker login ghcr.io -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
       - name: Publish container image
         run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
