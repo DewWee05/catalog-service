@@ -75,7 +75,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew bootBuildImage \
-            --imageName ghcr.io/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            --imageName ghcr.io/${{ env.IMAGE_NAME }}:${{ env.VERSION }} -PregistryToken=${GITHUB_TOKEN}
       - name: OCI image vulnerability scanning
         uses: anchore/scan-action@v3
         id: scan
